@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosso Cardápio</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header com Login e Carrinho -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="Logo-500x500.png" alt="Logo" class="logo">
+                    <h1><i class="fas fa-utensils"></i> Nosso Cardápio</h1>
+                </div>
+                
+                <div class="header-actions">
+                    <!-- Botão Login/Perfil -->
+                    <button class="login-btn" id="loginBtn">
+                        <i class="fas fa-user"></i> Entrar
+                    </button>
+                    
+                    <!-- Botão Carrinho -->
+                    <button class="cart-btn" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <p class="subtitle">Descubra nossos deliciosos produtos</p>
+            
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar produtos...">
+            </div>
+
+            <nav class="categories">
+                <button class="category-btn active" data-category="all">Todos</button>
+                <button class="category-btn" data-category="burgers">Burgers</button>
+                <button class="category-btn" data-category="pizzas">Pizzas</button>
+                <button class="category-btn" data-category="bebidas">Bebidas</button>
+                <button class="category-btn" data-category="sobremesas">Sobremesas</button>
+                <button class="category-btn" data-category="acompanhamentos">Acompanhamentos</button>
+            </nav>
+
+            <div class="products-grid" id="productsGrid">
+                <!-- Produtos aparecem aqui -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Login -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <span class="close" id="closeLogin">&times;</span>
+            <h2><i class="fas fa-user"></i> Entrar na Conta</h2>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="loginEmail" required placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Senha:</label>
+                    <input type="password" id="loginPassword" required placeholder="Sua senha">
+                </div>
+                
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+            
+            <div class="login-links">
+                <p>Não tem conta? <a href="#" id="showRegister">Cadastre-se</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Registro -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <span class="close" id="closeRegister">&times;</span>
+            <h2><i class="fas fa-user-plus"></i> Criar Conta</h2>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Nome:</label>
+                    <input type="text" id="registerName" required placeholder="Seu nome completo">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="registerEmail" required placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>Senha:</label>
+                    <input type="password" id="registerPassword" required placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <div class="form-group">
+                    <label>Telefone:</label>
+                    <input type="tel" id="registerPhone" placeholder="(11) 99999-9999">
+                </div>
+                
+                <button type="submit" class="btn-primary">Cadastrar</button>
+            </form>
+            
+            <div class="login-links">
+                <p>Já tem conta? <a href="#" id="showLogin">Fazer login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar do Carrinho -->
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3><i class="fas fa-shopping-cart"></i> Meu Carrinho</h3>
+            <button class="close-cart" id="closeCart">&times;</button>
+        </div>
+        
+        <div class="cart-items" id="cartItems">
+            <!-- Itens do carrinho aparecem aqui -->
+            <div class="empty-cart" id="emptyCart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Seu carrinho está vazio</p>
+            </div>
+        </div>
+        
+        <div class="cart-footer">
+            <div class="cart-total">
+                <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
+            </div>
+            
+            <!-- Campo de observações -->
+            <div class="observations-section">
+                <label for="orderObservations">Observações do pedido:</label>
+                <textarea 
+                    id="orderObservations" 
+                    placeholder="Ex: Sem cebola, ponto da carne, etc..."
+                    rows="3"
+                ></textarea>
+            </div>
+            
+            <div class="checkout-buttons">
+                <button class="btn-whatsapp" id="whatsappBtn">
+                    <i class="fab fa-whatsapp"></i> Pedir via WhatsApp
+                </button>
+                <button class="btn-checkout" id="checkoutBtn">
+                    <i class="fas fa-credit-card"></i> Finalizar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Perfil do Usuário -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content profile-modal">
+            <span class="close" id="closeProfile">&times;</span>
+            <h2><i class="fas fa-user-circle"></i> Meu Perfil</h2>
+            
+            <div class="profile-content">
+                <!-- Foto de Perfil -->
+                <div class="profile-picture-section">
+                    <div class="profile-picture-container">
+                        <img src="" alt="Foto de perfil" class="profile-picture" id="profilePicture">
+                        <div class="profile-picture-overlay">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <input type="file" id="profilePictureInput" accept="image/*" style="display: none;">
+                    </div>
+                    <button class="btn-change-photo" id="changePhotoBtn">
+                        <i class="fas fa-sync-alt"></i> Alterar Foto
+                    </button>
+                </div>
+
+                <!-- Informações do Usuário -->
+                <div class="profile-info">
+                    <div class="form-group">
+                        <label>Nome completo:</label>
+                        <input type="text" id="profileName" placeholder="Seu nome completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="profileEmail" placeholder="seu@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Telefone:</label>
+                        <input type="tel" id="profilePhone" placeholder="(11) 99999-9999">
+                    </div>
+                </div>
+
+                <!-- Endereços -->
+                <div class="address-section">
+                    <h3><i class="fas fa-map-marker-alt"></i> Meus Endereços</h3>
+                    
+                    <div class="address-list" id="addressList">
+                        <!-- Endereços aparecem aqui -->
+                    </div>
+                    
+                    <button class="btn-add-address" id="addAddressBtn">
+                        <i class="fas fa-plus"></i> Adicionar Endereço
+                    </button>
+                </div>
+
+                <!-- Histórico de Pedidos -->
+                <div class="order-history-section">
+                    <h3><i class="fas fa-history"></i> Histórico de Pedidos</h3>
+                    <div class="order-history" id="orderHistory">
+                        <p class="no-orders">Nenhum pedido realizado ainda</p>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="profile-actions">
+                    <button class="btn-primary" id="saveProfileBtn">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                    <button class="btn-secondary" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Sair da Conta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adicionar/Editar Endereço -->
+    <div class="modal" id="addressModal">
+        <div class="modal-content">
+            <span class="close" id="closeAddress">&times;</span>
+            <h2><i class="fas fa-map-marker-alt"></i> <span id="addressModalTitle">Adicionar Endereço</span></h2>
+            
+            <form id="addressForm">
+                <input type="hidden" id="addressId">
+                
+                <div class="form-group">
+                    <label>Apelido do Endereço:*</label>
+                    <input type="text" id="addressNickname" required placeholder="Ex: Casa, Trabalho...">
+                </div>
+                
+                <div class="form-group">
+                    <label>CEP:*</label>
+                    <input type="text" id="addressZipCode" required placeholder="00000-000" maxlength="9">
+                    <small style="color: #666; font-size: 0.8rem;">Digite o CEP e aguarde a busca automática</small>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Rua:*</label>
+                        <input type="text" id="addressStreet" required placeholder="Nome da rua">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Número:*</label>
+                        <input type="text" id="addressNumber" required placeholder="123">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Complemento:</label>
+                    <input type="text" id="addressComplement" placeholder="Apto, Bloco, etc.">
+                </div>
+                
+                <div class="form-group">
+                    <label>Bairro:*</label>
+                    <input type="text" id="addressNeighborhood" required placeholder="Nome do bairro">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cidade:*</label>
+                        <input type="text" id="addressCity" required placeholder="Nome da cidade">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Estado:*</label>
+                        <select id="addressState" required>
+                            <option value="">Selecione</option>
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Ponto de referência:</label>
+                    <input type="text" id="addressReference" placeholder="Próximo a...">
+                </div>
+                
+                <div class="address-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salvar Endereço
+                    </button>
+                    <button type="button" class="btn-secondary" id="cancelAddressBtn">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                </div>
+                
+                <small style="color: #666; display: block; margin-top: 15px; text-align: center;">
+                    * Campos obrigatórios
+                </small>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overlay para modais -->
+    <div class="overlay" id="overlay"></div>
+
+    <script src="script.js"></script>
+    <!-- Modal de Seleção de Mesa -->
+<div class="modal" id="tableModal">
+    <div class="modal-content">
+        <span class="close" id="closeTable">&times;</span>
+        <h2><i class="fas fa-qrcode"></i> Sistema de Mesas</h2>
+        
+        <div class="table-selection">
+            <div class="table-info">
+                <h3>Mesa Selecionada: <span id="currentTable">Nenhuma</span></h3>
+                <p class="table-subtitle">Escaneie o QR Code da mesa ou selecione manualmente</p>
+            </div>
+
+            <!-- Scanner de QR Code -->
+            <div class="qr-scanner-section">
+                <div class="scanner-container">
+                    <video id="qrVideo" width="300" height="300" style="display: none;"></video>
+                    <canvas id="qrCanvas" width="300" height="300" style="display: none;"></canvas>
+                    
+                    <div class="scanner-placeholder" id="scannerPlaceholder">
+                        <i class="fas fa-camera"></i>
+                        <p>Clique para escanear QR Code</p>
+                    </div>
+                    
+                    <button class="btn-scan-qr" id="startScannerBtn">
+                        <i class="fas fa-camera"></i> Escanear QR Code
+                    </button>
+                    <button class="btn-stop-scan" id="stopScannerBtn" style="display: none;">
+                        <i class="fas fa-stop"></i> Parar Scanner
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seleção Manual de Mesa -->
+            <div class="manual-selection">
+                <h4><i class="fas fa-mouse-pointer"></i> Seleção Manual</h4>
+                
+                <div class="table-grid" id="tableGrid">
+                    <!-- Mesas serão geradas aqui -->
+                </div>
+                
+                <div class="people-selection">
+                    <label>Número de pessoas:</label>
+                    <div class="people-buttons">
+                        <button class="people-btn" data-people="1">1</button>
+                        <button class="people-btn" data-people="2">2</button>
+                        <button class="people-btn" data-people="3">3</button>
+                        <button class="people-btn" data-people="4">4</button>
+                        <button class="people-btn" data-people="5">5</button>
+                        <button class="people-btn" data-people="6">6+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="table-actions">
+                <button class="btn-primary" id="confirmTableBtn">
+                    <i class="fas fa-check"></i> Confirmar Mesa
+                </button>
+                <button class="btn-secondary" id="clearTableBtn">
+                    <i class="fas fa-times"></i> Limpar Seleção
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botão Flutuante para Mesas -->
+<button class="floating-table-btn" id="floatingTableBtn">
+    <i class="fas fa-chair"></i>
+    <span class="table-badge" id="tableBadge">0</span>
+</button>
+</body>
+</html>
