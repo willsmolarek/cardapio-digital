@@ -1756,6 +1756,417 @@ body {
     flex: 1;
 }
 
+/* ========== SISTEMA DE AVALIAÇÕES ========== */
+
+/* Botão Flutuante de Avaliações */
+.floating-ratings-btn {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: var(--roxo-principal);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(65, 17, 69, 0.3);
+    transition: all 0.3s;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floating-ratings-btn:hover {
+    background: var(--roxo-escuro);
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(65, 17, 69, 0.4);
+}
+
+.ratings-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--vermelho);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Modal de Avaliações */
+.rating-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Seção de Nova Avaliação */
+.new-rating-section {
+    background: var(--roxo-suave);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 2px dashed var(--roxo-principal);
+}
+
+.rating-stars-input {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin: 15px 0;
+}
+
+.star-input {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.star-input:hover,
+.star-input.active {
+    color: #FFD700;
+    transform: scale(1.2);
+}
+
+.rating-comment {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    resize: vertical;
+    margin-bottom: 15px;
+    font-family: inherit;
+}
+
+.rating-comment:focus {
+    border-color: var(--roxo-principal);
+    outline: none;
+}
+
+.btn-submit-rating {
+    width: 100%;
+    padding: 12px;
+    background: var(--verde);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-submit-rating:hover {
+    background: #219653;
+    transform: translateY(-2px);
+}
+
+.btn-submit-rating:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Lista de Avaliações */
+.ratings-list {
+    margin-top: 20px;
+}
+
+.ratings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--roxo-suave);
+}
+
+.ratings-summary {
+    text-align: center;
+}
+
+.average-rating {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--roxo-principal);
+    line-height: 1;
+}
+
+.rating-count {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.stars-distribution {
+    flex: 1;
+    margin-left: 20px;
+}
+
+.rating-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+
+.rating-bar-label {
+    width: 20px;
+    text-align: center;
+}
+
+.rating-bar-progress {
+    flex: 1;
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    margin: 0 10px;
+    overflow: hidden;
+}
+
+.rating-bar-fill {
+    height: 100%;
+    background: #FFD700;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.rating-bar-count {
+    width: 30px;
+    text-align: right;
+    color: #666;
+}
+
+/* Item de Avaliação Individual */
+.rating-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.rating-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--roxo-suave);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--roxo-principal);
+}
+
+.user-details h4 {
+    margin: 0;
+    color: var(--roxo-principal);
+    font-size: 0.9rem;
+}
+
+.rating-date {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.rating-star {
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.rating-star.filled {
+    color: #FFD700;
+}
+
+.rating-comment-text {
+    color: #333;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.rating-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.btn-like-rating, .btn-report-rating {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+}
+
+.btn-like-rating:hover {
+    color: var(--verde);
+}
+
+.btn-report-rating:hover {
+    color: var(--vermelho);
+}
+
+.btn-like-rating.liked {
+    color: var(--verde);
+    font-weight: bold;
+}
+
+/* Produto sendo avaliado */
+.current-product-rating {
+    background: var(--roxo-principal);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.current-product-rating h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+}
+
+.current-product-rating p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+/* Filtros de Avaliações */
+.ratings-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: var(--roxo-principal);
+}
+
+.filter-btn.active {
+    background: var(--roxo-principal);
+    color: white;
+    border-color: var(--roxo-principal);
+}
+
+/* Estados vazios */
+.no-ratings {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.no-ratings i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #bdc3c7;
+}
+
+/* Badge de avaliação nos produtos */
+.product-rating-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255, 215, 0, 0.95);
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .floating-ratings-btn {
+        bottom: 90px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .ratings-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .stars-distribution {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .rating-item-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-ratings-btn {
+        bottom: 80px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
+    }
+    
+    .rating-stars-input {
+        gap: 3px;
+    }
+    
+    .star-input {
+        font-size: 1.7rem;
+    }
+}
+
 /* Badge no Header */
 .table-indicator {
     display: flex;
@@ -2093,4 +2504,484 @@ body {
 
 .scanner-loading.active {
     display: block;
+}
+
+/* ========== SCROLL PARA MODAL DE MESAS ========== */
+.modal-content.table-modal {
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-selection {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 60vh;
+    padding-right: 15px;
+    margin-right: -15px;
+}
+
+/* Scanner section */
+.qr-scanner-section {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--roxo-suave);
+}
+
+/* Manual selection */
+.manual-selection {
+    margin-bottom: 20px;
+}
+
+/* Table grid com scroll interno */
+.table-grid {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* People selection */
+.people-selection {
+    margin-bottom: 15px;
+}
+
+/* Table actions fixo no bottom */
+.table-actions {
+    margin-top: auto;
+    padding-top: 15px;
+    border-top: 2px solid var(--roxo-suave);
+    background: white;
+    position: sticky;
+    bottom: 0;
+}
+
+/* Custom scrollbar */
+.table-selection::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-selection::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.table-selection::-webkit-scrollbar-thumb {
+    background: var(--roxo-principal);
+    border-radius: 3px;
+}
+
+.table-selection::-webkit-scrollbar-thumb:hover {
+    background: var(--roxo-escuro);
+}
+
+/* Responsivo */
+@media (max-height: 700px) {
+    .table-selection {
+        max-height: 50vh;
+    }
+    
+    .table-grid {
+        max-height: 120px;
+    }
+}
+
+/* ========== SISTEMA DE NOTIFICAÇÕES ========== */
+.notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+}
+
+.notification {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-left: 5px solid var(--roxo-principal);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-height: 0;
+    overflow: hidden;
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+    max-height: 100px;
+}
+
+.notification.hiding {
+    transform: translateX(400px);
+    opacity: 0;
+    max-height: 0;
+    margin-bottom: 0;
+}
+
+.notification-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+.notification-message {
+    color: #666;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.notification-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    background: #f0f0f0;
+    color: #666;
+}
+
+/* Tipos de notificação */
+.notification.success {
+    border-left-color: var(--verde);
+}
+
+.notification.success .notification-icon {
+    background: var(--verde);
+    color: white;
+}
+
+.notification.error {
+    border-left-color: var(--vermelho);
+}
+
+.notification.error .notification-icon {
+    background: var(--vermelho);
+    color: white;
+}
+
+.notification.warning {
+    border-left-color: #f39c12;
+}
+
+.notification.warning .notification-icon {
+    background: #f39c12;
+    color: white;
+}
+
+.notification.info {
+    border-left-color: var(--azul);
+}
+
+.notification.info .notification-icon {
+    background: var(--azul);
+    color: white;
+}
+
+/* Efeitos especiais */
+@keyframes notificationPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.notification.pulse {
+    animation: notificationPulse 0.3s ease;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .notification-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .notification {
+        padding: 12px;
+    }
+}
+
+/* ========== DARK MODE MINECRAFT ========== */
+:root {
+    /* Cores Light Mode (Original) */
+    --roxo-principal: #411145;
+    --roxo-escuro: #2D0A30;
+    --roxo-claro: #5A1A5F;
+    --roxo-suave: #E8D4E9;
+    --verde: #27ae60;
+    --vermelho: #e74c3c;
+    --azul: #3498db;
+    --fundo: #f5f5f5;
+    --texto: #333;
+    --card: white;
+    --borda: rgba(65, 17, 69, 0.1);
+}
+
+/* Dark Mode Minecraft */
+body.dark-mode {
+    --roxo-principal: #8B4D8F;
+    --roxo-escuro: #6A2C6D;
+    --roxo-claro: #A85CAD;
+    --roxo-suave: #2A1A2B;
+    --verde: #57C278;
+    --vermelho: #FF6B6B;
+    --azul: #6BCAE2;
+    --fundo: #1A1A1A;
+    --texto: #E0E0E0;
+    --card: #2D2D2D;
+    --borda: rgba(139, 77, 143, 0.3);
+    
+    background-color: var(--fundo);
+    color: var(--texto);
+}
+
+/* Aplicar dark mode a todos os elementos */
+body.dark-mode .container,
+body.dark-mode .main-header,
+body.dark-mode .modal-content,
+body.dark-mode .product-card,
+body.dark-mode .cart-sidebar,
+body.dark-mode .profile-info,
+body.dark-mode .address-section,
+body.dark-mode .order-history-section {
+    background-color: var(--card);
+    color: var(--texto);
+    border-color: var(--borda);
+}
+
+body.dark-mode .search-bar input,
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode textarea {
+    background-color: #3A3A3A;
+    color: var(--texto);
+    border-color: #555;
+}
+
+body.dark-mode .category-btn {
+    background: var(--card);
+    color: var(--texto);
+    border-color: var(--roxo-principal);
+}
+
+body.dark-mode .category-btn.active {
+    background: var(--roxo-principal);
+    color: white;
+}
+
+body.dark-mode .restaurant-info,
+body.dark-mode .cart-item,
+body.dark-mode .address-item,
+body.dark-mode .order-item {
+    background: #3A3A3A;
+    border-color: #555;
+}
+
+/* ========== TOCHA REALISTA - VERSÃO DEFINITIVA ========== */
+.torch-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.torch-btn:hover {
+    background: rgba(139, 77, 143, 0.1);
+    transform: scale(1.05);
+}
+
+.torch {
+    position: relative;
+    width: 24px;
+    height: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* CABO DA TOCHA */
+.torch-handle {
+    width: 8px;
+    height: 20px;
+    background: linear-gradient(45deg, #8B4513, #A0522D, #8B4513);
+    border-radius: 4px;
+    position: relative;
+    z-index: 2;
+    order: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* FOGO APAGADO - VERMELHO TRADICIONAL, MENOR */
+.torch-flame {
+    width: 8px;  /* ← MENOR quando apagada */
+    height: 10px; /* ← MENOR quando apagada */
+    background: linear-gradient(to top, 
+        #8B0000 0%,    /* Vermelho escuro */
+        #B22222 50%,   /* Vermelho fogo */
+        #DC143C 100%   /* Vermelho claro */
+    );
+    border-radius: 40% 40% 30% 30%;
+    position: relative;
+    z-index: 3;
+    order: 1;
+    margin-bottom: -1px;
+    box-shadow: 
+        0 0 5px #B22222,
+        0 0 8px #8B0000;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-origin: bottom;
+}
+
+/* FOGO ACESO - CRESCE E MUDA COR */
+.torch-btn.active .torch-flame {
+    width: 12px;   /* ← CRESCE quando acesa */
+    height: 16px;  /* ← CRESCE quando acesa */
+    background: linear-gradient(to top, 
+        #8B0000 0%,    /* Vermelho na base */
+        #FF0000 20%,   /* Vermelho vivo */
+        #FF4500 50%,   /* Laranja vermelho */
+        #FF8C00 80%,   /* Laranja */
+        #FFD700 100%   /* Amarelo na ponta */
+    );
+    box-shadow: 
+        0 0 10px #FF4500,
+        0 0 20px #FF0000,
+        0 0 30px #FF8C00;
+    animation: torchFlicker 0.8s infinite alternate;
+}
+
+/* AURA DE FOGO - SÓ APARECE QUANDO ACESO */
+.torch-glow {
+    position: absolute;
+    top: -2px;
+    left: -6px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        rgba(255, 69, 0, 0.7) 0%,     /* Vermelho laranja */
+        rgba(255, 69, 0, 0.3) 40%, 
+        rgba(255, 69, 0, 0.1) 70%,
+        transparent 90%
+    );
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    z-index: 1;
+    animation: torchGlowPulse 2s infinite alternate;
+}
+
+.torch-btn.active .torch-glow {
+    opacity: 1;
+}
+
+/* ANIMAÇÃO DE ACENDER - EFEITO DE "ESTALO" */
+@keyframes torchIgnite {
+    0% {
+        transform: scale(0.8);
+        filter: brightness(0.5);
+    }
+    50% {
+        transform: scale(1.3);
+        filter: brightness(2);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+/* ANIMAÇÕES DO FOGO */
+@keyframes torchFlicker {
+    0%, 100% { 
+        transform: scaleY(1) scaleX(1) rotate(0deg);
+        filter: brightness(1) hue-rotate(0deg);
+    }
+    25% { 
+        transform: scaleY(1.1) scaleX(0.9) rotate(1deg);
+        filter: brightness(1.3) hue-rotate(5deg);
+    }
+    50% { 
+        transform: scaleY(0.9) scaleX(1.1) rotate(-1deg);
+        filter: brightness(0.8) hue-rotate(-3deg);
+    }
+    75% { 
+        transform: scaleY(1.05) scaleX(0.95) rotate(0.5deg);
+        filter: brightness(1.2) hue-rotate(2deg);
+    }
+}
+
+@keyframes torchGlowPulse {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% { 
+        transform: scale(1.15);
+        opacity: 0.9;
+    }
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .torch {
+        width: 20px;
+        height: 28px;
+    }
+    
+    .torch-handle {
+        width: 6px;
+        height: 16px;
+    }
+    
+    .torch-flame {
+        width: 6px;   /* Menor no mobile */
+        height: 8px;  /* Menor no mobile */
+    }
+    
+    .torch-btn.active .torch-flame {
+        width: 10px;  /* Cresce no mobile */
+        height: 14px; /* Cresce no mobile */
+    }
+    
+    .torch-glow {
+        width: 28px;
+        height: 28px;
+        left: -4px;
+    }
 }

@@ -15,19 +15,30 @@
             <div class="header-content">
                 <div class="logo-container">
                     <img src="Logo-500x500.png" alt="Logo" class="logo">
-                    <h1><i class="fas fa-utensils"></i> Nosso Cardápio</h1>
+                    <h1 onclick="voltarTelaInicial()" style="cursor: pointer;">
+    <i class="fas fa-utensils"></i> Meu Cardápio
+</h1>
                 </div>
                 
                 <div class="header-actions">
-                    <!-- Botão Login/Perfil -->
-                    <button class="login-btn" id="loginBtn">
-                        <i class="fas fa-user"></i> Entrar
+                    <!-- Botão Tocha Minecraft - ADICIONE ESTE -->
+                    <button class="torch-btn" id="torchBtn" title="Acender/Abafar Tocha">
+                        <div class="torch">
+                 <div class="torch-handle"></div>
+                 <div class="torch-flame"></div>
+                 <div class="torch-glow"></div>
+                 </div>
                     </button>
-                    
-                    <!-- Botão Carrinho -->
-                    <button class="cart-btn" id="cartBtn">
+    
+             <!-- Botão Login/Perfil -->
+                    <button class="login-btn" id="loginBtn">
+                         <i class="fas fa-user"></i> Entrar
+                    </button>
+    
+                     <!-- Botão Carrinho -->
+                        <button class="cart-btn" id="cartBtn">
                         <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount">0</span>
+                    <span class="cart-count" id="cartCount">0</span>
                     </button>
                 </div>
             </div>
@@ -412,6 +423,24 @@
 <button class="floating-table-btn" id="floatingTableBtn">
     <i class="fas fa-chair"></i>
     <span class="table-badge" id="tableBadge">0</span>
+</button>
+
+<!-- Modal de Avaliações -->
+<div class="modal" id="ratingsModal">
+    <div class="modal-content">
+        <span class="close" id="closeRatings">&times;</span>
+        <h2><i class="fas fa-star"></i> Avaliar Produto</h2>
+        
+        <div class="rating-content" id="ratingContent">
+            <!-- Conteúdo dinâmico das avaliações -->
+        </div>
+    </div>
+</div>
+
+<!-- Botão Flutuante para Avaliações -->
+<button class="floating-ratings-btn" id="floatingRatingsBtn" title="Ver Avaliações">
+    <i class="fas fa-star"></i>
+    <span class="ratings-badge" id="ratingsBadge">0</span>
 </button>
 </body>
 </html>

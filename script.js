@@ -19,7 +19,7 @@ const produtos = [
     {
         id: 3,
         nome: "Pizza Margherita",
-        descricao: "Molho de tomate, mussarela, tomate fresco e manjericão",
+        descricao: "Molho de tomate, mussarela de bufala, tomate fresco e manjericão",
         preco: 45.90,
         categoria: "pizzas",
         imagem: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=400&h=300&fit=crop"
@@ -59,6 +59,9 @@ const configRestaurante = {
     mesas: 20
 };
 
+// ========== CONFIGURAÇÃO DO SISTEMA ==========
+const usarMesa = true; // Define se o sistema de mesas está ativo
+
 // Estado da aplicação
 let estado = {
     usuario: null,
@@ -69,7 +72,12 @@ let estado = {
     pedidos: [],
     mesa: null,
     numeroPessoas: 1,
-    scannerAtivo: false
+    scannerAtivo: false,
+    darkMode: false,
+    // ⭐ NOVO: Sistema de Avaliações
+    avaliacoes: [],
+    produtoAvaliando: null,
+    filtroAvaliacoes: 'all' // all, 5, 4, 3, 2, 1
 };
 
 // Elementos do DOM
@@ -151,15 +159,46 @@ function inicializarElementos() {
         tableBadge: document.getElementById('tableBadge'),
         
         // Overlay
-        overlay: document.getElementById('overlay')
+        overlay: document.getElementById('overlay'),
+
+        // Tocha
+        torchBtn: document.getElementById('torchBtn'),
+
+        // ⭐ NOVO: Sistema de Avaliações
+        ratingsModal: document.getElementById('ratingsModal'),
+        closeRatings: document.getElementById('closeRatings'),
+        ratingContent: document.getElementById('ratingContent'),
+        floatingRatingsBtn: document.getElementById('floatingRatingsBtn'),
+        ratingsBadge: document.getElementById('ratingsBadge')
     };
 }
 
-// ========== SISTEMA DE PRODUTOS ==========
-function carregarProdutos() {
-    renderizarProdutos();
+// ========== SISTEMA DE DARK MODE ==========
+function carregarDarkMode() {
+    const darkModeSalvo = localStorage.getItem('darkMode');
+    estado.darkMode = darkModeSalvo === 'true';
+    aplicarDarkMode();
 }
 
+function aplicarDarkMode() {
+    if (estado.darkMode) {
+        document.body.classList.add('dark-mode');
+        if (elements.torchBtn) {
+            elements.torchBtn.classList.add('active');
+        }
+    } else {
+        document.body.classList.remove('dark-mode');
+        if (elements.torchBtn) {
+            elements.torchBtn.classList.remove('active');
+        }
+    }
+}
+
+function salvarDarkMode() {
+    localStorage.setItem('darkMode', estado.darkMode.toString());
+}
+
+// ========== SISTEMA DE PRODUTOS ==========
 function renderizarProdutos() {
     if (!elements.productsGrid) return;
     
@@ -189,9 +228,15 @@ function renderizarProdutos() {
                 <h3>${produto.nome}</h3>
                 <p>${produto.descricao}</p>
                 <div class="product-price">R$ ${produto.preco.toFixed(2)}</div>
-                <button class="add-to-cart" onclick="adicionarAoCarrinho(${JSON.stringify(produto).replace(/"/g, '&quot;')}, this)">
-                    <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
-                </button>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="add-to-cart" onclick="adicionarAoCarrinho(${JSON.stringify(produto).replace(/"/g, '&quot;')}, this)" style="flex: 2;">
+                        <i class="fas fa-cart-plus"></i> Adicionar
+                    </button>
+                    <button class="btn-rate-product" onclick="mostrarModalAvaliacoes(${JSON.stringify(produto).replace(/"/g, '&quot;')})" style="flex: 1; background: var(--azul); color: white; border: none; border-radius: 8px; padding: 10px; cursor: pointer; transition: background 0.3s;">
+                        <i class="fas fa-star"></i>
+                    </button>
+                </div>
             </div>
         `;
         elements.productsGrid.appendChild(productCard);
@@ -204,11 +249,13 @@ function adicionarAoCarrinho(produto, botao) {
     
     if (itemExistente) {
         itemExistente.quantidade++;
+        notificarSucesso(`${produto.nome} - Quantidade aumentada!`, 'Carrinho Atualizado');
     } else {
         estado.carrinho.push({
             ...produto,
             quantidade: 1
         });
+        notificarSucesso(`${produto.nome} adicionado ao carrinho!`, 'Produto Adicionado');
     }
     
     if (botao) {
@@ -220,7 +267,13 @@ function adicionarAoCarrinho(produto, botao) {
 }
 
 function removerDoCarrinho(produtoId) {
+    const produto = estado.carrinho.find(item => item.id === produtoId);
     estado.carrinho = estado.carrinho.filter(item => item.id !== produtoId);
+    
+    if (produto) {
+        notificarInfo(`${produto.nome} removido do carrinho`, 'Item Removido');
+    }
+    
     salvarCarrinho();
     atualizarCarrinho();
 }
@@ -366,6 +419,15 @@ function criarAnimacaoCarrinho(botao, produto) {
     flyingIcon.style.left = startX + 'px';
     flyingIcon.style.top = startY + 'px';
     
+    // Calcular animação
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+    
+    flyingIcon.style.setProperty('--startX', startX + 'px');
+    flyingIcon.style.setProperty('--startY', startY + 'px');
+    flyingIcon.style.setProperty('--endX', endX + 'px');
+    flyingIcon.style.setProperty('--endY', endY + 'px');
+    
     flyingIcon.style.animation = `flyToCart 0.8s cubic-bezier(0.65, 0, 0.35, 1) forwards`;
     
     document.body.appendChild(flyingIcon);
@@ -398,16 +460,14 @@ function animarAdicaoCarrinho(botao, produto) {
 // ========== SISTEMA WHATSAPP ==========
 function enviarPedidoWhatsApp() {
     if (estado.carrinho.length === 0) {
-        alert('Seu carrinho está vazio!');
+        notificarErro('Seu carrinho está vazio!', 'Carrinho Vazio');
         return;
     }
 
-    if (!estado.mesa) {
-        const usarMesa = confirm('Nenhuma mesa selecionada. Deseja selecionar uma mesa antes de fazer o pedido?');
-        if (usarMesa) {
-            mostrarModalMesas();
-            return;
-        }
+    if (usarMesa && !estado.mesa) {
+        notificarAviso('Nenhuma mesa selecionada', 'Selecionar Mesa');
+        mostrarModalMesas();
+        return;
     }
 
     const observacoes = document.getElementById('orderObservations') ? document.getElementById('orderObservations').value : '';
@@ -450,7 +510,7 @@ function enviarPedidoWhatsApp() {
     fecharCarrinho();
     
     // Feedback visual
-    mostrarMensagem('Pedido enviado via WhatsApp!', 'success');
+    notificarSucesso('Pedido enviado com sucesso via WhatsApp!', 'Pedido Enviado');
 }
 
 // ========== CONTROLES DE INTERFACE ==========
@@ -498,7 +558,8 @@ function fazerLogin(email, senha) {
     salvarUsuario();
     atualizarInterfaceUsuario();
     esconderLogin();
-    alert(`Bem-vindo, ${usuario.nome}!`);
+    
+    notificarSucesso(`Bem-vindo, ${usuario.nome}!`, 'Login Realizado');
 }
 
 function fazerRegistro(dados) {
@@ -514,7 +575,7 @@ function fazerRegistro(dados) {
     salvarUsuario();
     atualizarInterfaceUsuario();
     esconderLogin();
-    alert(`Conta criada com sucesso! Bem-vindo, ${usuario.nome}!`);
+    notificarSucesso(`Conta criada com sucesso! Bem-vindo, ${usuario.nome}!`, 'Cadastro Realizado');
 }
 
 function fazerLogout() {
@@ -523,7 +584,7 @@ function fazerLogout() {
         localStorage.removeItem('usuario');
         atualizarInterfaceUsuario();
         fecharPerfil();
-        alert('Você saiu da sua conta!');
+        notificarInfo('Você saiu da sua conta!', 'Logout');
         esconderLogin();
         fecharCarrinho();
     }
@@ -544,7 +605,7 @@ function atualizarInterfaceUsuario() {
 // ========== SISTEMA DE PERFIL ==========
 function mostrarPerfil() {
     if (!estado.usuario) {
-        alert('Por favor, faça login primeiro!');
+        notificarAviso('Por favor, faça login primeiro!', 'Login Necessário');
         mostrarLogin();
         return;
     }
@@ -605,7 +666,7 @@ function processarUploadFoto(event) {
         if (elements.profilePicture) elements.profilePicture.src = e.target.result;
         salvarUsuario();
         atualizarInterfaceUsuario();
-        alert('Foto de perfil atualizada com sucesso!');
+        notificarSucesso('Foto de perfil atualizada com sucesso!', 'Foto Atualizada');
     };
     reader.readAsDataURL(file);
 }
@@ -808,9 +869,9 @@ function salvarEndereco(event) {
         salvarEnderecos();
         carregarEnderecos();
         fecharModalEndereco();
-        alert('Endereço salvo com sucesso!');
+        notificarSucesso('Endereço salvo com sucesso!', 'Endereço Salvo');
     } else {
-        alert('Erro ao salvar endereço!');
+        notificarErro('Erro ao salvar endereço!', 'Erro');
     }
 }
 
@@ -821,7 +882,7 @@ function definirEnderecoPadrao(enderecoId) {
     
     salvarEnderecos();
     carregarEnderecos();
-    alert('Endereço padrão definido com sucesso!');
+    notificarSucesso('Endereço padrão definido com sucesso!', 'Endereço Padrão');
 }
 
 function editarEndereco(enderecoId) {
@@ -839,7 +900,7 @@ function excluirEndereco(enderecoId) {
     
     salvarEnderecos();
     carregarEnderecos();
-    alert('Endereço excluído com sucesso!');
+    notificarInfo('Endereço excluído com sucesso!', 'Endereço Excluído');
 }
 
 // ========== HISTÓRICO DE PEDIDOS ==========
@@ -935,7 +996,7 @@ function salvarPerfil() {
 
     salvarUsuario();
     atualizarInterfaceUsuario();
-    alert('Perfil atualizado com sucesso!');
+    notificarSucesso('Perfil atualizado com sucesso!', 'Perfil Atualizado');
 }
 
 // ========== SISTEMA DE MESAS E QR CODE ==========
@@ -995,7 +1056,7 @@ function selecionarNumeroPessoas(numero) {
 
 function confirmarMesa() {
     if (!estado.mesa) {
-        alert('Por favor, selecione uma mesa primeiro!');
+        notificarAviso('Por favor, selecione uma mesa primeiro!', 'Mesa Não Selecionada');
         return;
     }
 
@@ -1036,7 +1097,7 @@ function limparMesa() {
     estado.numeroPessoas = 1;
     carregarGradeMesas();
     atualizarInterfaceMesa();
-    mostrarMensagem('Seleção de mesa removida', 'info');
+    notificarInfo('Seleção de mesa removida', 'Mesa Limpa');
 }
 
 function atualizarInterfaceMesa() {
@@ -1233,29 +1294,471 @@ function reproduzirSomErro() {
     }
 }
 
-function mostrarMensagem(mensagem, tipo = 'info') {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${tipo}`;
-    messageDiv.textContent = mensagem;
+// ========== SISTEMA DE AVALIAÇÕES ==========
+
+// Carregar avaliações do localStorage
+function carregarAvaliacoes() {
+    const avaliacoesSalvas = localStorage.getItem('avaliacoes');
+    if (avaliacoesSalvas) {
+        estado.avaliacoes = JSON.parse(avaliacoesSalvas);
+    }
+    atualizarBadgeAvaliacoes();
+}
+
+// Salvar avaliações no localStorage
+function salvarAvaliacoes() {
+    localStorage.setItem('avaliacoes', JSON.stringify(estado.avaliacoes));
+    atualizarBadgeAvaliacoes();
+}
+
+// Atualizar badge com número de avaliações
+function atualizarBadgeAvaliacoes() {
+    if (elements.ratingsBadge) {
+        const totalAvaliacoes = estado.avaliacoes.length;
+        elements.ratingsBadge.textContent = totalAvaliacoes > 99 ? '99+' : totalAvaliacoes.toString();
+        elements.ratingsBadge.style.display = totalAvaliacoes > 0 ? 'flex' : 'none';
+    }
+}
+
+// Mostrar modal de avaliações
+function mostrarModalAvaliacoes(produto = null) {
+    estado.produtoAvaliando = produto;
+    carregarConteudoAvaliacoes();
     
-    document.body.appendChild(messageDiv);
+    if (elements.ratingsModal) elements.ratingsModal.classList.add('active');
+    if (elements.overlay) elements.overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Fechar modal de avaliações
+function fecharModalAvaliacoes() {
+    if (elements.ratingsModal) elements.ratingsModal.classList.remove('active');
+    if (elements.overlay) elements.overlay.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    estado.produtoAvaliando = null;
+}
+
+// Carregar conteúdo do modal de avaliações
+function carregarConteudoAvaliacoes() {
+    if (!elements.ratingContent) return;
     
-    setTimeout(() => {
-        messageDiv.classList.add('show');
-    }, 100);
+    const produto = estado.produtoAvaliando;
+    const usuarioComprouProduto = verificarSeUsuarioComprou(produto?.id);
+    const usuarioJaAvaliou = estado.avaliacoes.some(av => 
+        av.produtoId === produto?.id && av.usuarioId === estado.usuario?.id
+    );
     
-    setTimeout(() => {
-        messageDiv.classList.remove('show');
-        setTimeout(() => {
-            if (messageDiv.parentNode) {
-                document.body.removeChild(messageDiv);
+    elements.ratingContent.innerHTML = `
+        ${produto ? criarSecaoProdutoAtual(produto) : ''}
+        ${criarSecaoNovaAvaliacao(produto, usuarioComprouProduto, usuarioJaAvaliou)}
+        ${criarListaAvaliacoes(produto)}
+    `;
+    
+    // Inicializar event listeners das estrelas
+    inicializarEventListenersAvaliacoes();
+}
+
+// Verificar se usuário comprou o produto
+function verificarSeUsuarioComprou(produtoId) {
+    if (!estado.usuario || !produtoId) return false;
+    
+    // Verifica nos pedidos do usuário se ele comprou este produto
+    return estado.pedidos.some(pedido => 
+        pedido.itens.some(item => item.id === produtoId)
+    );
+}
+
+// Criar seção do produto sendo avaliado
+function criarSecaoProdutoAtual(produto) {
+    const avaliacoesProduto = estado.avaliacoes.filter(av => av.produtoId === produto.id);
+    const media = avaliacoesProduto.length > 0 ? 
+        avaliacoesProduto.reduce((sum, av) => sum + av.estrelas, 0) / avaliacoesProduto.length : 0;
+    
+    return `
+        <div class="current-product-rating">
+            <h4>${produto.nome}</h4>
+            <p>Avaliação média: ${media.toFixed(1)} ⭐ (${avaliacoesProduto.length} avaliações)</p>
+        </div>
+    `;
+}
+
+// Criar seção de nova avaliação
+function criarSecaoNovaAvaliacao(produto, usuarioComprou, usuarioJaAvaliou) {
+    if (!estado.usuario) {
+        return `
+            <div class="new-rating-section">
+                <p style="text-align: center; margin: 0; color: var(--vermelho);">
+                    <i class="fas fa-exclamation-triangle"></i> Faça login para avaliar produtos
+                </p>
+            </div>
+        `;
+    }
+    
+    if (!produto) {
+        return `
+            <div class="new-rating-section">
+                <p style="text-align: center; margin: 0;">
+                    Selecione um produto para avaliar
+                </p>
+            </div>
+        `;
+    }
+    
+    if (!usuarioComprou) {
+        return `
+            <div class="new-rating-section">
+                <p style="text-align: center; margin: 0; color: var(--vermelho);">
+                    <i class="fas fa-shopping-bag"></i> Compre este produto para poder avaliá-lo
+                </p>
+                <button class="add-to-cart" onclick="adicionarAoCarrinho(${JSON.stringify(produto).replace(/"/g, '&quot;')}, this); fecharModalAvaliacoes()" style="width: 100%; margin-top: 10px;">
+                    <i class="fas fa-cart-plus"></i> Comprar Agora
+                </button>
+            </div>
+        `;
+    }
+    
+    if (usuarioJaAvaliou) {
+        return `
+            <div class="new-rating-section">
+                <p style="text-align: center; margin: 0; color: var(--verde);">
+                    <i class="fas fa-check-circle"></i> Você já avaliou este produto!
+                </p>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="new-rating-section">
+            <h4 style="text-align: center; margin-bottom: 15px; color: var(--roxo-principal);">
+                <i class="fas fa-edit"></i> Avaliar ${produto.nome}
+            </h4>
+            
+            <div class="rating-stars-input" id="ratingStarsInput">
+                <span class="star-input" data-rating="1">★</span>
+                <span class="star-input" data-rating="2">★</span>
+                <span class="star-input" data-rating="3">★</span>
+                <span class="star-input" data-rating="4">★</span>
+                <span class="star-input" data-rating="5">★</span>
+            </div>
+            
+            <div style="text-align: center; margin: 10px 0; font-size: 0.9rem; color: #666;">
+                <span id="selectedRatingText">Selecione quantas estrelas</span>
+            </div>
+            
+            <textarea 
+                class="rating-comment" 
+                id="ratingComment" 
+                placeholder="Conte sua experiência com este produto... (opcional)"
+                rows="3"
+            ></textarea>
+            
+            <button class="btn-submit-rating" id="submitRatingBtn" disabled>
+                <i class="fas fa-paper-plane"></i> Enviar Avaliação
+            </button>
+        </div>
+    `;
+}
+
+// Criar lista de avaliações
+function criarListaAvaliacoes(produto = null) {
+    const avaliacoes = produto ? 
+        estado.avaliacoes.filter(av => av.produtoId === produto.id) : 
+        estado.avaliacoes;
+    
+    if (avaliacoes.length === 0) {
+        return `
+            <div class="no-ratings">
+                <i class="fas fa-star"></i>
+                <p>${produto ? 'Nenhuma avaliação para este produto ainda' : 'Nenhuma avaliação no sistema ainda'}</p>
+                <p style="font-size: 0.9rem; color: #888;">Seja o primeiro a avaliar!</p>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="ratings-list">
+            <h4 style="margin-bottom: 15px; color: var(--roxo-principal);">
+                <i class="fas fa-list"></i> ${produto ? 'Avaliações deste produto' : 'Todas as avaliações'} (${avaliacoes.length})
+            </h4>
+            <div class="ratings-items">
+                ${avaliacoes
+                    .sort((a, b) => new Date(b.data) - new Date(a.data))
+                    .map(avaliacao => criarItemAvaliacao(avaliacao))
+                    .join('')}
+            </div>
+        </div>
+    `;
+}
+
+// Criar item de avaliação individual
+function criarItemAvaliacao(avaliacao) {
+    const produto = produtos.find(p => p.id === avaliacao.produtoId);
+    const dataFormatada = new Date(avaliacao.data).toLocaleDateString('pt-BR');
+    
+    return `
+        <div class="rating-item">
+            <div class="rating-item-header">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        ${avaliacao.usuarioNome ? avaliacao.usuarioNome.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div class="user-details">
+                        <h4>${avaliacao.usuarioNome || 'Usuário'}</h4>
+                        ${produto ? `<p style="font-size: 0.8rem; color: #666; margin: 0;">${produto.nome}</p>` : ''}
+                        <div class="rating-date">${dataFormatada}</div>
+                    </div>
+                </div>
+                <div class="rating-stars">
+                    ${criarEstrelasVisuais(avaliacao.estrelas)}
+                </div>
+            </div>
+            
+            ${avaliacao.comentario ? `
+                <p class="rating-comment-text">${avaliacao.comentario}</p>
+            ` : ''}
+        </div>
+    `;
+}
+
+// Criar estrelas visuais
+function criarEstrelasVisuais(quantidade) {
+    let estrelas = '';
+    for (let i = 1; i <= 5; i++) {
+        estrelas += `<span class="rating-star ${i <= quantidade ? 'filled' : ''}">★</span>`;
+    }
+    return estrelas;
+}
+
+// Inicializar event listeners das avaliações
+function inicializarEventListenersAvaliacoes() {
+    let estrelasSelecionadas = 0;
+    
+    // Estrelas de avaliação
+    document.querySelectorAll('.star-input').forEach(star => {
+        star.addEventListener('click', () => {
+            estrelasSelecionadas = parseInt(star.dataset.rating);
+            
+            // Atualiza visual das estrelas
+            document.querySelectorAll('.star-input').forEach(s => {
+                const rating = parseInt(s.dataset.rating);
+                s.classList.toggle('active', rating <= estrelasSelecionadas);
+                s.style.color = rating <= estrelasSelecionadas ? '#FFD700' : '#ddd';
+            });
+            
+            // Atualiza texto
+            const ratingText = document.getElementById('selectedRatingText');
+            if (ratingText) {
+                const textos = ['Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
+                ratingText.textContent = `${estrelasSelecionadas} estrelas - ${textos[estrelasSelecionadas - 1]}`;
+                ratingText.style.color = '#333';
+                ratingText.style.fontWeight = 'bold';
             }
-        }, 300);
-    }, 3000);
+            
+            // Habilita botão de envio
+            const submitBtn = document.getElementById('submitRatingBtn');
+            if (submitBtn) submitBtn.disabled = false;
+        });
+        
+        // Efeito hover
+        star.addEventListener('mouseover', () => {
+            const hoverRating = parseInt(star.dataset.rating);
+            document.querySelectorAll('.star-input').forEach(s => {
+                const rating = parseInt(s.dataset.rating);
+                s.style.color = rating <= hoverRating ? '#FFD700' : '#ddd';
+            });
+        });
+        
+        star.addEventListener('mouseout', () => {
+            document.querySelectorAll('.star-input').forEach(s => {
+                const rating = parseInt(s.dataset.rating);
+                s.style.color = rating <= estrelasSelecionadas ? '#FFD700' : '#ddd';
+            });
+        });
+    });
+    
+    // Botão de enviar avaliação
+    const submitBtn = document.getElementById('submitRatingBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+            if (estrelasSelecionadas > 0) {
+                submeterAvaliacao(estrelasSelecionadas);
+            }
+        });
+    }
+}
+
+// Submeter nova avaliação
+function submeterAvaliacao(estrelas) {
+    if (!estado.usuario || !estado.produtoAvaliando) return;
+    
+    const comentario = document.getElementById('ratingComment')?.value.trim() || '';
+    
+    const novaAvaliacao = {
+        id: Date.now(),
+        produtoId: estado.produtoAvaliando.id,
+        produtoNome: estado.produtoAvaliando.nome,
+        usuarioId: estado.usuario.id,
+        usuarioNome: estado.usuario.nome,
+        estrelas: estrelas,
+        comentario: comentario,
+        data: new Date().toISOString(),
+        curtidas: []
+    };
+    
+    estado.avaliacoes.push(novaAvaliacao);
+    salvarAvaliacoes();
+    
+    notificarSucesso(`Avaliação de ${estrelas} estrelas enviada com sucesso!`, 'Obrigado pelo Feedback');
+    fecharModalAvaliacoes();
+}
+
+// ========== SISTEMA DE TOCHA/DARK MODE ==========
+function alternarDarkMode() {
+    estado.darkMode = !estado.darkMode;
+    aplicarDarkMode();
+    salvarDarkMode();
+    
+    // Som de raspagem
+    reproduzirSomTocha();
+    
+    // Animação de "estalo" ao acender
+    if (estado.darkMode) {
+        const torchFlame = document.querySelector('.torch-flame');
+        if (torchFlame) {
+            torchFlame.style.animation = 'torchIgnite 0.3s ease-out, torchFlicker 0.8s infinite alternate 0.3s';
+        }
+        notificarSucesso('Tocha acesa!', '🔥 Modo Noturno');
+        
+        // Criar partículas após um delay
+        setTimeout(criarParticulasFogo, 100);
+    } else {
+        // Remover partículas ao apagar
+        const particles = document.querySelector('.torch-fire-particles');
+        if (particles) {
+            particles.remove();
+        }
+        notificarInfo('Tocha apagada', '🌞 Modo Diurno');
+    }
+}
+
+function reproduzirSomTocha() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        if (estado.darkMode) {
+            // SOM DE ACENDER - RASPAGEM + ESTALO
+            const raspagem = audioContext.createOscillator();
+            const estalo = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            // Configurar raspagem (som baixo de atrito)
+            raspagem.type = 'sawtooth';
+            raspagem.frequency.setValueAtTime(80, audioContext.currentTime);
+            raspagem.frequency.exponentialRampToValueAtTime(120, audioContext.currentTime + 0.3);
+            
+            // Configurar estalo (som agudo da chama)
+            estalo.type = 'square';
+            estalo.frequency.setValueAtTime(800, audioContext.currentTime);
+            estalo.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+            estalo.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.4);
+            
+            // Configurar filtro para som mais "metálico"
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1000, audioContext.currentTime);
+            
+            // Configurar volume
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.2);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+            
+            // Conectar tudo
+            raspagem.connect(filter);
+            estalo.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Iniciar sons
+            raspagem.start(audioContext.currentTime);
+            estalo.start(audioContext.currentTime + 0.15);
+            
+            // Parar sons
+            raspagem.stop(audioContext.currentTime + 0.8);
+            estalo.stop(audioContext.currentTime + 0.8);
+            
+        } else {
+            // SOM DE APAGAR - SOPRO + CHAMUSCO
+            const sopro = audioContext.createOscillator();
+            const chamusco = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            // Som de sopro
+            sopro.type = 'sine';
+            sopro.frequency.setValueAtTime(150, audioContext.currentTime);
+            sopro.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 0.5);
+            
+            // Som de chamusco (curto e agudo)
+            chamusco.type = 'square';
+            chamusco.frequency.setValueAtTime(600, audioContext.currentTime);
+            chamusco.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.1);
+            
+            // Filtro para som de vento
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(200, audioContext.currentTime);
+            
+            // Configurar volume
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+            
+            // Conectar
+            sopro.connect(filter);
+            chamusco.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Iniciar e parar
+            sopro.start(audioContext.currentTime);
+            chamusco.start(audioContext.currentTime);
+            sopro.stop(audioContext.currentTime + 0.6);
+            chamusco.stop(audioContext.currentTime + 0.2);
+        }
+    } catch (error) {
+        console.log('Áudio não suportado - mas as animações vão funcionar!');
+    }
+}
+
+function criarParticulasFogo() {
+    const torchBtn = document.getElementById('torchBtn');
+    if (!torchBtn || !estado.darkMode) return;
+    
+    // Remove partículas antigas
+    const oldParticles = document.querySelector('.torch-fire-particles');
+    if (oldParticles) oldParticles.remove();
+    
+    const particlesContainer = document.createElement('div');
+    particlesContainer.className = 'torch-fire-particles';
+    
+    // Cria 8 partículas
+    for (let i = 0; i < 8; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'torch-particle';
+        particle.style.left = Math.random() * 30 + 'px';
+        particle.style.animationDelay = (Math.random() * 1.5) + 's';
+        particlesContainer.appendChild(particle);
+    }
+    
+    torchBtn.appendChild(particlesContainer);
 }
 
 // ========== EVENT LISTENERS ==========
 function inicializarEventListeners() {
+    // Tocha
+    if (elements.torchBtn) {
+        elements.torchBtn.addEventListener('click', alternarDarkMode);
+    }
+
     // Categorias
     if (elements.categoryButtons) {
         elements.categoryButtons.forEach(button => {
@@ -1351,6 +1854,7 @@ function inicializarEventListeners() {
             fecharPerfil();
             fecharModalEndereco();
             fecharModalMesas();
+            fecharModalAvaliacoes();
         });
     }
 
@@ -1362,6 +1866,7 @@ function inicializarEventListeners() {
             fecharPerfil();
             fecharModalEndereco();
             fecharModalMesas();
+            fecharModalAvaliacoes();
         }
     });
 }
@@ -1407,23 +1912,182 @@ function inicializarEventListenersMesas() {
     }
 }
 
+// ========== SISTEMA DE NOTIFICAÇÕES ==========
+function criarContainerNotificacoes() {
+    if (document.getElementById('notificationContainer')) return;
+    
+    const container = document.createElement('div');
+    container.id = 'notificationContainer';
+    container.className = 'notification-container';
+    document.body.appendChild(container);
+}
+
+function mostrarNotificacao(titulo, mensagem, tipo = 'info', duracao = 4000) {
+    criarContainerNotificacoes();
+    
+    const container = document.getElementById('notificationContainer');
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${tipo}`;
+    
+    let icon = 'ℹ️';
+    switch(tipo) {
+        case 'success': icon = '✓'; break;
+        case 'error': icon = '✕'; break;
+        case 'warning': icon = '⚠'; break;
+        case 'info': icon = 'ℹ'; break;
+    }
+    
+    notification.innerHTML = `
+        <div class="notification-icon">${icon}</div>
+        <div class="notification-content">
+            <div class="notification-title">${titulo}</div>
+            <div class="notification-message">${mensagem}</div>
+        </div>
+        <button class="notification-close" onclick="fecharNotificacao(this.parentElement)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+        notification.classList.add('pulse');
+        
+        setTimeout(() => {
+            notification.classList.remove('pulse');
+        }, 300);
+    }, 100);
+    
+    if (duracao > 0) {
+        setTimeout(() => {
+            fecharNotificacao(notification);
+        }, duracao);
+    }
+    
+    return notification;
+}
+
+function fecharNotificacao(notification) {
+    if (!notification) return;
+    
+    notification.classList.remove('show');
+    notification.classList.add('hiding');
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 400);
+}
+
+function notificarSucesso(mensagem, titulo = 'Sucesso!') {
+    return mostrarNotificacao(titulo, mensagem, 'success', 3000);
+}
+
+function notificarErro(mensagem, titulo = 'Erro!') {
+    return mostrarNotificacao(titulo, mensagem, 'error', 5000);
+}
+
+function notificarAviso(mensagem, titulo = 'Atenção!') {
+    return mostrarNotificacao(titulo, mensagem, 'warning', 4000);
+}
+
+function notificarInfo(mensagem, titulo = 'Informação') {
+    return mostrarNotificacao(titulo, mensagem, 'info', 3000);
+}
+
+// ========== FUNÇÕES AUXILIARES ==========
+function inicializarClickLogo() {
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.addEventListener('click', voltarTelaInicial);
+        logo.style.cursor = 'pointer';
+        logo.title = 'Clique para voltar ao início';
+    }
+}
+
+function voltarTelaInicial() {
+    console.log('📱 Voltando ao cardápio principal...');
+    
+    // 1. Resetar filtros
+    estado.categoriaAtual = 'all';
+    estado.termoBusca = '';
+    
+    // 2. Resetar interface
+    if (elements.categoryButtons) {
+        elements.categoryButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.category === 'all') {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
+    if (elements.searchInput) {
+        elements.searchInput.value = '';
+    }
+    
+    // 3. Fechar tudo
+    fecharTodosModais();
+    
+    // 4. Mostrar todos os produtos
+    renderizarProdutos();
+    
+    // 5. Ir para o topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function fecharTodosModais() {
+    // Fechar modais
+    if (elements.loginModal) elements.loginModal.classList.remove('active');
+    if (elements.registerModal) elements.registerModal.classList.remove('active');
+    if (elements.profileModal) elements.profileModal.classList.remove('active');
+    if (elements.addressModal) elements.addressModal.classList.remove('active');
+    if (elements.tableModal) elements.tableModal.classList.remove('active');
+    if (elements.ratingsModal) elements.ratingsModal.classList.remove('active');
+    
+    // Fechar carrinho
+    if (elements.cartSidebar) elements.cartSidebar.classList.remove('active');
+    
+    // Fechar overlay
+    if (elements.overlay) elements.overlay.classList.remove('active');
+    
+    // Parar scanner
+    pararScanner();
+    
+    // Restaurar scroll
+    document.body.style.overflow = 'auto';
+}
+
 // ========== INICIALIZAÇÃO ==========
 function inicializar() {
     inicializarElementos();
     carregarDadosUsuario();
     carregarCarrinho();
+    carregarDarkMode();
+    carregarAvaliacoes();
     atualizarInterfaceUsuario();
     atualizarCarrinho();
-    carregarProdutos();
+    renderizarProdutos();
     inicializarEventListeners();
     inicializarEventListenersMesas();
+    inicializarEventListenersAvaliacoesGlobais();
     atualizarInterfaceMesa();
+    inicializarClickLogo();
+    criarContainerNotificacoes();
+    
+    // Criar partículas se estiver em dark mode
+    if (estado.darkMode) {
+        setTimeout(criarParticulasFogo, 1000);
+    }
 }
 
 // Iniciar a aplicação
 document.addEventListener('DOMContentLoaded', inicializar);
 
-// Funções globais
+// ========== FUNÇÕES GLOBAIS ==========
 window.adicionarAoCarrinho = adicionarAoCarrinho;
 window.removerDoCarrinho = removerDoCarrinho;
 window.alterarQuantidade = alterarQuantidade;
@@ -1436,3 +2100,31 @@ window.excluirEndereco = excluirEndereco;
 window.mostrarModalMesas = mostrarModalMesas;
 window.iniciarScanner = iniciarScanner;
 window.pararScanner = pararScanner;
+window.voltarTelaInicial = voltarTelaInicial;
+window.fecharTodosModais = fecharTodosModais;
+window.mostrarNotificacao = mostrarNotificacao;
+window.notificarSucesso = notificarSucesso;
+window.notificarErro = notificarErro;
+window.notificarAviso = notificarAviso;
+window.notificarInfo = notificarInfo;
+window.fecharNotificacao = fecharNotificacao;
+window.alternarDarkMode = alternarDarkMode;
+
+// ⭐ NOVAS FUNÇÕES DE AVALIAÇÕES
+window.mostrarModalAvaliacoes = mostrarModalAvaliacoes;
+window.curtirAvaliacao = curtirAvaliacao;
+window.denunciarAvaliacao = denunciarAvaliacao;
+window.enviarAvaliacaoTeste = enviarAvaliacaoTeste;
+
+// Event listeners globais do sistema de avaliações
+function inicializarEventListenersAvaliacoesGlobais() {
+    // Botão flutuante de avaliações
+    if (elements.floatingRatingsBtn) {
+        elements.floatingRatingsBtn.addEventListener('click', () => mostrarModalAvaliacoes());
+    }
+    
+    // Fechar modal de avaliações
+    if (elements.closeRatings) {
+        elements.closeRatings.addEventListener('click', fecharModalAvaliacoes);
+    }
+}
